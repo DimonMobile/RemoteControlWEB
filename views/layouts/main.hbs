@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="/public/css/bootstrap.css" rel="stylesheet" />
+    <link href="/public/css/site.css" rel="stylesheet" />
+    <title>Remote Control</title>
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="/">Remote control</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02"
+                aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+                {{#if req.session.isAuthorized}}
+                <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                    {{#if req.session.isAdmin}}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/users/list">Users configuration</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Servers configuration</a>
+                    </li>
+                    {{/if}}
+                </ul>
+                <span class="navbar-text">{{req.session.userName}}
+                    <a class="btn btn-outline-primary" href="/users/logout">Logout</a>
+                </span>
+                {{/if}}
+            </div>
+        </nav>
+    </header>
+    <main role="main" class="pb-3">
+        <div class="container">
+            {{{body}}}
+        </div>
+    </main>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2021 - PDAServer - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="/public/js/jquery-3.6.0.min.js"></script>
+    <script src="/public/js/popper.min.js"></script>
+    <script src="/public/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,49 @@
+<div class="row">
+    <div class="col-md-4">
+        <h3>No registration available!</h3>
+        <p>Contact your administrator to get an account. Only administrator can create accounts for that system.</p>
+        <blockquote>
+            <p class="mb-0">Hey buddy, I think you've got the wrong door, the leather club's two blocks down.</p>
+            <footer class="blockquote-footer">Mark Wolff</footer>
+        </blockquote>
+    </div>
+    <div class="col-md-8">
+        {{#if errors}}
+        <div class="alert alert-danger" role="alert">
+            {{errors.global}}
+        </div>
+        {{/if}}
+        <form action="/users/authorize" method="POST">
+            <div class="form-group">
+                <label for="userLogin">User name</label>
+                <input name="login" type="text" class="form-control {{#if errors.loginError}} is-invalid{{/if}}"
+                    id="userLogin" aria-describedby="loginHelp" placeholder="Enter login">
+
+                {{#if errors.loginError}}
+                <div class="invalid-feedback">
+                    {{errors.loginError}}
+                </div>
+                {{else}}
+                <small id="loginHelp" class="form-text text-muted">We'll never share your email with anyone
+                    else.</small>
+                {{/if}}
+            </div>
+            <div class="form-group">
+                <label for="userPassword">Password</label>
+                <input name="password" type="password"
+                    class="form-control {{#if errors.passwordError}} is-invalid{{/if}}" id="userPassword"
+                    placeholder="Password">
+                {{#if errors.passwordError}}
+                <div class="invalid-feedback">
+                    {{errors.passwordError}}
+                </div>
+                {{/if}}
+            </div>
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="userCheckOut">
+                <label class="form-check-label" for="userCheckOut">Check me out</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+</div>
