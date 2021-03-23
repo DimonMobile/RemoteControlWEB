@@ -13,6 +13,10 @@ const Server = sequelize.define('Server', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  port: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
 }, {
   indexes: [{
     unique: true,

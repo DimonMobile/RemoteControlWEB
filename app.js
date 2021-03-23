@@ -5,6 +5,7 @@ const exphbs = require('express-handlebars');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const panelsRouter = require('./routes/panels');
+const serversRouter = require('./routes/servers');
 
 const APP_PORT = 3000;
 
@@ -26,6 +27,7 @@ app.use('/public', express.static('public'));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/panels', panelsRouter);
+app.use('/servers', serversRouter);
 
 app.listen(APP_PORT, () => {
   console.log(`http://127.0.0.1:${APP_PORT}`);

@@ -1,0 +1,30 @@
+<div class="row">
+    <div class="col">
+        <h1>{{serverData.dataValues.name}}</h1>
+        <h4>{{serverData.dataValues.address}}</h4>
+        <h4>{{serverData.dataValues.port}}</h4>
+
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-4">
+        <form action="/servers/users/{{serverData.dataValues.id}}" method="POST">
+            <select name="id" class="mb-3 form-select form-select-sm">
+                {{#each usersList}}
+                <option value="{{this.id}}">{{this.login}}</option>
+                {{/each}}
+            </select>
+            <input type="submit" class="mb-3 btn btn-primary form-control" value="Add user"/>
+        </form>
+    </div>
+    <div class="col-md-8">
+        <ul class="list-group">
+            {{#each preparedUsers}}
+            <li class="list-group-item justify-content-between align-items-center d-flex">
+                {{this.id}}. {{this.login}}
+                <a href="/servers/actions/deleteLink/{{this.linkId}}?returnTo={{../serverData.dataValues.id}}" class="btn btn-danger">Remove</a>
+            </li>
+            {{/each}}
+        </ul>
+    </div>
+</div>

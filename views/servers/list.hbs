@@ -1,0 +1,46 @@
+<div class="row">
+    <div class="col-md-8">
+        <h2>All servers</h2>
+        <table class="table table-striped table-hover table-sm">
+            <caption>All servers</caption>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Port</th>
+                <th>Actions</th>
+            </tr>
+            {{#each servers}}
+            <tr>
+                <td>{{this.dataValues.id}}</td>
+                <td><a href="#">{{this.dataValues.name}}</a></td>
+                <td>{{this.dataValues.address}}</td>
+                <td>{{this.dataValues.port}}</td>
+                <td> <a href="#">edit</a> | <a href="/servers/users/{{this.dataValues.id}}">users</a> | <a href="/servers/actions/delete/{{this.dataValues.id}}">delete</a> </td>
+            </tr>
+            {{/each}}
+        </table>
+    </div>
+    <div class="col-md-4">
+        <form action="/servers/list" method="POST">
+            <div class="form-group mb-3">
+                <label for="serverName">Server name</label>
+                <input name="name" type="text" class="form-control" id="serverName"
+                    placeholder="Enter server name">
+            </div>
+            <div class="form-group mb-3">
+                <label for="serverAddress">Server address</label>
+                <input name="address" type="text" class="form-control" id="serverName"
+                    placeholder="Enter server address">
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="serverPort">Server port</label>
+                <input name="port" type="number" min="1" max="65535" class="form-control" id="serverPort"
+                    placeholder="Enter server port">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+</div>
