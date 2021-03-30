@@ -2,6 +2,8 @@ const ServerModel = require('../models/server');
 const ServerUsersModel = require('../models/serverUsers');
 const UserModel = require('../models/user');
 
+const axios = require('axios');
+
 exports.list_get = async function (req, res) {
     try {
         if (req.session.role !== 'admin') {
@@ -83,6 +85,29 @@ exports.users_get = async function (req, res) {
 
     } catch (e) {
         res.end(e.message);
+    }
+}
+
+exports.status_get = async function (req, res) {
+    try {
+        if (req.session.role !== 'admin') {
+            throw new Error('Persmissions error');
+        }
+
+        let serverId = parseInt(req.params.id);
+        let server = await ServerModel.findByPk(serverId);
+        if (server === null)
+            throw new Error('Server not found');
+        
+        axios.get(`http://${server.address}:${server.port}/device/status`).then(response => {
+            if (response.data.status === 'running') {
+                res.status(200).contentType('application/json').end(JSON.stringify(response.data));
+            }
+        }).catch(e => {
+            res.status(500).contentType('application/json').end(JSON.stringify({error: e.message}));
+        });
+    } catch (e) {
+        res.status(400).end(JSON.stringify({error: e.message}));
     }
 }
 

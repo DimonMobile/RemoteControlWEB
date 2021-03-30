@@ -9,6 +9,8 @@ router.post('/list', servers_controller.list_post);
 router.get('/users/:id', servers_controller.users_get);
 router.post('/users/:id', servers_controller.users_post);
 
+router.get('/status/:id', servers_controller.status_get);
+
 router.get('/actions/delete/:id', servers_controller.action_delete);
 router.get('/actions/deleteLink/:id', servers_controller.action_deleteLink);
 
