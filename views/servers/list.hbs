@@ -34,7 +34,8 @@
                 <td><a href="#">{{this.dataValues.name}}</a></td>
                 <td>{{this.dataValues.address}}</td>
                 <td>{{this.dataValues.port}}</td>
-                <td> <a href="#">[edit]</a> | <a href="/servers/users/{{this.dataValues.id}}">[users]</a> | <a href="#">[configuration]</a> | <a
+                <td> <a href="/servers/configure/{{this.dataValues.id}}">[configure]</a> |
+                     <a href="/servers/users/{{this.dataValues.id}}">[users]</a> | <a
                         href="/servers/actions/delete/{{this.dataValues.id}}">[delete]</a> </td>
                 <td>
                     <div class="ws-loader spinner-border spinner-border-sm" role="status"

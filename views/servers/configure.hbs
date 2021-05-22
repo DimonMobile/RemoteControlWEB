@@ -1,0 +1,171 @@
+<style>
+    .slave {
+        width: 30px;
+        height: 30px;
+        background-color: peru;
+        position: absolute;
+
+        border: 2px solid white;
+        border-radius: 50%;
+
+        cursor: pointer;
+    }
+</style>
+
+<div class="row">
+    <div class="col">
+        Configuration server: {{req.params.id}}
+        <p class="lead">{{server.dataValues.address}}:{{server.dataValues.port}}</p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-4">
+        <ul class="list-group">
+            {{#each points}}
+            <li class="list-group-item justify-content-between d-flex slave-item" data-slave-id="{{@index}}">
+                <input autocomplete="off" class="slave-name-input" type="text" value="{{this.name}}" />
+                <span class="slave-name">{{this.name}}</span>
+                <a href="#" class="slave-set-button">[set]</a>
+            </li>
+            {{/each}}
+        </ul>
+        <a href="#" id="renameBtn">[rename]</a> | <a href="#" id="saveBtn">[save]</a>
+        <h5 class="mt-5">Or you can update photo</h5>
+        <div class="input-group mb-3">
+            <input type="file" class="form-control" id="devicePhotoInput">
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <img id="workingarea" src="/servers/picture/{{req.params.id}}" class="img-fluid" />
+    </div>
+</div>
+
+{{#each points}}
+<div class="slave" data-slave-id="{{@index}}" data-slave-x="{{x}}" data-slave-y="{{y}}" data-slave-name="{{name}}">
+</div>
+{{/each}}
+
+<script>
+    let workingArea = document.querySelector('#workingarea');
+
+    let slaves = document.querySelectorAll('.slave');
+
+    function adjustSlaves() {
+        setTimeout(() => {
+            let rect = workingArea.getBoundingClientRect();
+            for (let slave of slaves) {
+
+                let offX = parseFloat(slave.getAttribute("data-slave-x"));
+                let offY = parseFloat(slave.getAttribute("data-slave-y"));
+
+                let rect = workingArea.getBoundingClientRect();
+
+                slave.style.left = `${rect.left + window.scrollX + rect.width * offX}px`;
+                slave.style.top = `${rect.top + window.scrollY + rect.height * offY}px`;
+            }
+        }, 200);
+    }
+
+    setInterval(adjustSlaves, 1000);
+
+    window.addEventListener('resize', (e) => {
+        adjustSlaves()
+    });
+
+    for (let element of document.querySelectorAll('.slave-name-input')) {
+        element.style = "display: none";
+    }
+
+    document.querySelector("#renameBtn").addEventListener('click', (e) => {
+        for (let element of document.querySelectorAll('.slave-name')) {
+            element.style = "display: none";
+        }
+        for (let element of document.querySelectorAll('.slave-name-input')) {
+            element.style = "display: block";
+        }
+
+        e.preventDefault();
+    });
+
+    let selectedSlaveId = -1;
+    workingArea.addEventListener('click', (e) => {
+        let rect = workingArea.getBoundingClientRect();
+        if (selectedSlaveId == -1) {
+            return;
+        }
+
+        slaves[selectedSlaveId].style.left = `${e.layerX}px`;
+        slaves[selectedSlaveId].style.top = `${e.layerY}px`;
+
+        const resultX = (e.clientX - rect.left) / rect.width;
+        const resultY = (e.clientY - rect.top) / rect.height;
+
+        slaves[selectedSlaveId].setAttribute('data-slave-x', resultX);
+        slaves[selectedSlaveId].setAttribute('data-slave-y', resultY);
+    });
+
+    let slaveBtns = document.querySelectorAll('.slave-set-button');
+    let slaveItems = document.querySelectorAll('.slave-item');
+    for (let slaveBtn of slaveBtns) {
+        slaveBtn.addEventListener('click', (e) => {
+            for (let slaveItem of slaveItems) {
+                if (e.target.parentElement == slaveItem) {
+                    slaveItem.classList.add('list-group-item-primary');
+                    selectedSlaveId = parseInt(slaveItem.getAttribute('data-slave-id'));
+                }
+                else
+                    slaveItem.classList.remove('list-group-item-primary');
+            }
+
+            e.preventDefault();
+        });
+    }
+
+    saveBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        let slavesArray = [];
+
+        let inputs = document.querySelectorAll('.slave-name-input');
+        for (let i = 0; i < inputs.length; ++i) {
+            slaves[i].setAttribute('data-slave-name', inputs[i].value);
+        }
+
+        for (let slave of slaves) {
+            let slaveObj = {};
+            slaveObj.x = parseFloat(slave.getAttribute('data-slave-x'));
+            slaveObj.y = parseFloat(slave.getAttribute('data-slave-y'));
+            slaveObj.name = slave.getAttribute('data-slave-name');
+
+            slavesArray.push(slaveObj);
+        }
+
+        await fetch(`/servers/configure/{{req.params.id}}`, {
+            method: 'POST',
+            body: JSON.stringify(slavesArray),
+            headers: {
+                'Content-type': 'application/json'
+            }
+        });
+        location.reload();
+        console.log(slavesArray);
+    });
+
+    devicePhotoInput.addEventListener('change',async  (e) => {
+        let reader = new FileReader();
+
+        reader.onload = async () => {
+            await fetch(`/servers/picture/{{req.params.id}}`, {
+                method: 'POST',
+                body: reader.result,
+                headers: {
+                    'Content-type': e.target.files[0].type
+                }
+            });
+
+            location.reload();
+        }
+
+        reader.readAsArrayBuffer(e.target.files[0]);
+    });
+</script>

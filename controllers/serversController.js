@@ -111,6 +111,54 @@ exports.status_get = async function (req, res) {
     }
 }
 
+exports.configuration_post = async function(req, res) {
+    try {
+        if (req.session.role !== 'admin') {
+            throw new Error('Permissions error');
+        }
+
+        let serverId = parseInt(req.params.id);
+        let server = await ServerModel.findByPk(serverId);
+        if (server === null)
+            throw new Error('Server not found');
+
+        let collectedData = '';
+        req.on('data', async chunk => {
+            collectedData += chunk;            
+        });
+
+        req.on('end', async () =>{
+            let response = await axios.post(`http://${server.address}:${server.port}/device/points`, JSON.parse(collectedData));
+            console.log(response.status);
+
+            res.status(200).end();
+        });
+
+    } catch (e) {
+        res.status(400).end(JSON.stringify({error: e.message}));
+    }
+}
+
+exports.configuration_get = async function(req, res) {
+    try {
+        if (!req.session.isAuthorized) {
+            throw new Error('Permissions error');
+        }
+
+        let serverId = parseInt(req.params.id);
+        let server = await ServerModel.findByPk(serverId);
+        if (server === null)
+            throw new Error('Server not found');
+
+        let response = await axios.get(`http://${server.address}:${server.port}/device/points`)
+
+        res.render('servers/configure', {req, points: response.data, server});
+
+    } catch (e) {
+        res.status(400).end(JSON.stringify({error: e.message}));
+    }
+}
+
 exports.action_deleteLink = async function (req, res) {
     try {
         if (req.session.role !== 'admin') {
@@ -124,6 +172,64 @@ exports.action_deleteLink = async function (req, res) {
         await serverUser.destroy();
 
         res.redirect(`/servers/users/${serverId}`);
+    } catch (e) {
+        res.end(e.message);
+    }
+}
+
+exports.picture_post = async function(req, res) {
+    try {
+        if (req.session.role !== 'admin') {
+            throw new Error('Permissions error');
+        }
+
+        let serverId = parseInt(req.params.id);
+
+        let server = await ServerModel.findByPk(serverId);
+        if (server === null) {
+            throw new Error('Server not found');
+        }
+
+        let collected = []
+        req.on('data', (chunk) => {
+            collected.push(chunk);
+        });
+    
+        req.on('end', async () => {
+            let buffer = Buffer.concat(collected);
+
+            await axios.post(`http://${server.address}:${server.port}/device/picture`, buffer, {
+                headers: {
+                    'Content-type': req.get('Content-type')
+                }
+            });
+            
+            res.status(200).end();
+        });
+        
+    } catch (e) {
+        res.end(e.message);
+    }
+}
+
+exports.picture_get = async function(req, res) {
+    try {
+        if (!req.session.isAuthorized) {
+            throw new Error('Permissions error');
+        }
+
+        let serverId = parseInt(req.params.id);
+
+        let server = await ServerModel.findByPk(serverId);
+        if (server === null) {
+            throw new Error('Server not found');
+        }
+    
+        let response = await axios.get(`http://${server.address}:${server.port}/device/picture`, {
+            responseType: 'arraybuffer'
+        });
+        res.contentType(response.headers['content-type']);
+        res.end(response.data);
     } catch (e) {
         res.end(e.message);
     }

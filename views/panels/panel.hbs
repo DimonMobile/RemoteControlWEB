@@ -1,0 +1,194 @@
+<style>
+    .slave {
+        width: 30px;
+        height: 30px;
+        border: 2px solid white;
+        cursor: pointer;
+        border-radius: 50%;
+
+        position: absolute;
+    }
+
+    .slave:hover {
+        border: 2px solid grey;
+        filter: brightness(50%);
+    }
+
+    .slave[data-slave-state="active"] {
+        background-color: lime;
+    }
+
+    .slave[data-slave-state="unactive"] {
+        background-color: red;
+    }
+
+    .slave[data-slave-state=""] {
+        background-color: grey;
+    }
+</style>
+
+<div class="row">
+    <div class="col">
+        <h4 class="display-4">Working with: {{server.dataValues.name}}</h4>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <img id="workingArea" src="/servers/picture/{{server.dataValues.id}}" class="img-fluid" />
+
+    </div>
+</div>
+<div class="row mt-3" id="slavesPreloader">
+    <div class="d-flex align-items-center">
+        <strong>Loading...</strong>
+        <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+    aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="switcherTitle" class="modal-title" id="staticBackdropLabel">...</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input id="turnSlaveInputId" type="hidden" value="" />
+                <p>Device is now <span id="currentDeviceStateSpan"></span>, you can send command</p>
+                <div class="list-group">
+                    <button id="turnOnSlaveButton" type="button"
+                        class="list-group-item list-group-item-action list-group-item-success">Switch
+                        it on</button>
+                    <button id="turnOffSlaveButton" type="button"
+                        class="list-group-item list-group-item-action list-group-item-danger">Switch
+                        it off</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{#each points}}
+<div data-bs-toggle="modal" data-bs-target="#staticBackdrop" title="{{name}}" class="slave" data-slave-x="{{x}}"
+    data-slave-y="{{y}}" data-slave-name="{{name}}" data-slave-index="{{@index}}" data-slave-state=""></div>
+{{/each}}
+
+<script>
+
+    for (let slave of document.querySelectorAll(".slave")) {
+        slave.addEventListener('click', (e) => {
+            switcherTitle.innerText = e.target.getAttribute('data-slave-name');
+            const currentState = e.target.getAttribute('data-slave-state');
+
+            if (currentState === 'active') {
+                currentDeviceStateSpan.style = "color: lime";
+            } else {
+                currentDeviceStateSpan.style = "color: red";
+            }
+            currentDeviceStateSpan.innerText = currentState;
+
+            turnSlaveInputId.value = e.target.getAttribute('data-slave-index');
+        });
+    }
+
+
+    function adjustSlaves() {
+        let slaves = document.querySelectorAll(".slave");
+        for (let slave of slaves) {
+            let rect = workingArea.getBoundingClientRect();
+
+            let slaveOffX = parseFloat(slave.getAttribute('data-slave-x'));
+            let slaveOffY = parseFloat(slave.getAttribute('data-slave-y'));
+
+            slave.style.left = `${window.scrollX + rect.left + rect.width * slaveOffX}px`;
+            slave.style.top = `${window.scrollY + rect.top + rect.height * slaveOffY}px`;
+        }
+    }
+
+    setInterval(adjustSlaves, 500);
+
+    window.addEventListener('resize', (e) => {
+        setTimeout(adjustSlaves, 50);
+    });
+
+    async function loadSlavesInfo() {
+        try {
+            slavesPreloader.style = "display: block"
+            let resp = await fetch('/panels/api/state/{{req.params.id}}');
+            let parsedResp = await resp.json();
+
+            if (!Array.isArray(parsedResp)) {
+                throw new Error('Unknown package');
+            }
+
+            let slaves = document.querySelectorAll('.slave');
+            if (parsedResp.length !== slaves.length) {
+                throw new Error('Incompatible slaves number');
+            }
+
+            for (let i = 0; i < slaves.length; ++i) {
+                if (parsedResp[i] === true) {
+                    slaves[i].setAttribute('data-slave-state', 'active');
+                } else {
+                    slaves[i].setAttribute('data-slave-state', 'unactive');
+                }
+            }
+
+        } catch (e) {
+            console.log('Slaves loading error:');
+            console.log(e.message);
+        } finally {
+            slavesPreloader.style = "display: none";
+        }
+    }
+
+
+    turnOnSlaveButton.addEventListener('click', async (e) => {
+        if (turnSlaveInputId.value === '') {
+            return;
+        }
+
+        let resp = await fetch(`/panels/api/state/{{req.params.id}}/${turnSlaveInputId.value}/active`, {
+            method: 'POST'
+        });
+
+        let parsedResp = await resp.json();
+        if (parsedResp.status === 'ok') {
+            loadSlavesInfo();
+            hideSlavesModal();
+        }
+    });
+
+    turnOffSlaveButton.addEventListener('click', async (e) => {
+        if (turnSlaveInputId.value === '') {
+            return;
+        }
+
+        let resp = await fetch(`/panels/api/state/{{req.params.id}}/${turnSlaveInputId.value}/inactive`, {
+            method: 'POST'
+        });
+
+        let parsedResp = await resp.json();
+        if (parsedResp.status === 'ok') {
+            loadSlavesInfo();
+            hideSlavesModal();
+        }
+    });
+
+    loadSlavesInfo();
+
+    setInterval(loadSlavesInfo, 5000);
+
+    function hideSlavesModal() {
+        let myModal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop'), {
+            keyboard: false
+        });
+
+        myModal.hide();
+    }
+</script>
